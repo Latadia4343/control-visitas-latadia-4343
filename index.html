@@ -123,6 +123,21 @@ table tr{transition:background .15s}table tr:hover td{background:rgba(255,255,25
 .portal-back{border:1px solid #d5dde5;border-radius:12px;background:rgba(255,255,255,.7);padding:9px 13px;font-weight:750;cursor:pointer;margin-right:8px}
 @media(max-width:700px){.portal-grid{grid-template-columns:1fr}.portal-title{font-size:30px}.portal-screen{padding:20px}.portal-brand{margin-bottom:30px}}
 
+/* V18 · Inventario de Insumos */
+.inventory-layout{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
+.inventory-kpi{padding:18px;border:1px solid #D7E3EF;border-radius:18px;background:#fff}
+.inventory-kpi strong{display:block;font-size:28px;color:#0B2341;margin-top:6px}
+.inventory-table-wrap{overflow:auto;border:1px solid #DCE5ED;border-radius:15px;background:#fff}
+.inventory-form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.inventory-low{color:#B42318;font-weight:800}.inventory-ok{color:#167447;font-weight:800}
+.inventory-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.inventory-shortcut{border:1px solid #DCE5ED;background:#FFFFFF;color:#526273;border-radius:999px;padding:13px 18px;font:inherit;font-size:14px;font-weight:750;cursor:pointer;box-shadow:0 8px 22px rgba(11,35,65,.07);transition:transform .18s,background .18s,border-color .18s}
+.inventory-shortcut:hover,.inventory-shortcut:focus-visible{background:#EAF4FF;border-color:#A9CFF5;color:#0B2341;transform:translateY(-1px);outline:none}
+.inventory-anchor{scroll-margin-top:110px}
+.inventory-note{padding:12px 14px;border-radius:12px;background:#EDF6FF;color:#135E9E;font-size:12px;margin:12px 0}
+@media(max-width:760px){.inventory-layout,.inventory-form-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.inventory-layout,.inventory-form-grid{grid-template-columns:1fr}}
+
 
 /* --- V16 · Novedades + ocupaciones internas --- */
 .novedad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
@@ -273,6 +288,13 @@ nav{
         <span class="portal-badge">COMITÉ</span>
         <div class="module-arrow">→</div>
       </div>
+      <div class="portal-module inventory-module" onclick="enterModule('inventario')">
+        <div class="module-icon">📦</div>
+        <h2>Inventario de Insumos</h2>
+        <p>Control de existencias, consumos, reposición y requerimientos de aseo y oficina.</p>
+        <span class="portal-badge">INVENTARIO</span>
+        <div class="module-arrow">→</div>
+      </div>
     </div>
     <div class="footer-note" style="margin-top:28px">Acceso seguro · Usuario: <span id="portalUser"></span></div>
   </div>
@@ -366,6 +388,22 @@ nav{
 <div id="listaNovedades"></div>
   </div>
 </section>
+<section id="inventario" class="view">
+  <div class="hero"><h2>Inventario de Insumos</h2><p>Control de existencias, consumos y necesidades de reposición.</p><div class="inventory-tabs" aria-label="Accesos rápidos del inventario"><button type="button" class="inventory-shortcut" onclick="goInventorySection('inventoryCatalogCard')">Catálogo centralizado</button><button type="button" class="inventory-shortcut" onclick="goInventorySection('inventoryMovementCard')">Historial de movimientos</button><button type="button" class="inventory-shortcut" onclick="goInventorySection('inventoryRequestCard')">Requerimientos de compra</button></div></div>
+  <div class="inventory-layout" id="inventoryKpis"></div>
+  <div class="card inventory-anchor" id="inventoryCatalogCard"><div class="section-title"><div><h3>Existencias</h3><p>Las cantidades deben corresponder al conteo físico.</p></div><button class="secondary" onclick="loadInventory()">↻ Actualizar</button></div>
+    <input class="search" id="inventorySearch" placeholder="Buscar producto o categoría..." oninput="renderInventoryProducts()">
+    <div id="inventoryProducts" class="inventory-table-wrap"></div>
+  </div>
+  <div class="card"><h3>Registrar movimiento</h3><p class="muted">Use inventario inicial para cargar el conteo físico por primera vez; después registre entradas o consumos.</p>
+    <div class="inventory-form-grid"><div><label>Producto *</label><select id="invMoveProduct"></select></div><div><label>Movimiento *</label><select id="invMoveType"><option value="inventario_inicial">Inventario inicial</option><option value="entrada">Entrada / reposición</option><option value="consumo">Consumo</option></select></div><div><label>Cantidad *</label><input id="invMoveQty" type="number" min="0.01" step="0.01" placeholder="Ej. 3"></div><div class="full"><label>Motivo</label><input id="invMoveReason" placeholder="Ej. conteo inicial, reposición mensual, uso de aseo..."></div><div class="full"><label>Observaciones</label><textarea id="invMoveNotes" placeholder="Información adicional (opcional)"></textarea></div></div>
+    <div class="actions"><button class="primary" onclick="saveInventoryMovement()">Guardar movimiento</button></div>
+    <div class="inventory-note">Cada movimiento actualiza el stock y queda registrado en el historial.</div>
+  </div>
+  <div class="card inventory-anchor" id="inventoryRequestCard"><h3>Solicitar reposición o nuevo producto</h3><div class="inventory-form-grid"><div><label>Producto del catálogo</label><select id="invReqProduct"><option value="">Producto nuevo / no listado</option></select></div><div><label>Nombre del producto *</label><input id="invReqName" placeholder="Nombre del producto"></div><div><label>Cantidad solicitada</label><input id="invReqQty" type="number" min="0.01" step="0.01" placeholder="Cantidad"></div><div><label>Unidad</label><input id="invReqUnit" value="unidad" placeholder="unidad, litro, caja..."></div><div class="full"><label>Motivo / detalle *</label><textarea id="invReqReason" placeholder="Qué se necesita y por qué"></textarea></div></div><div class="actions"><button class="primary" onclick="saveInventoryRequest()">Enviar requerimiento</button></div><div id="inventoryRequests"></div></div>
+  <div class="card inventory-anchor" id="inventoryMovementCard"><h3>Historial de movimientos</h3><div id="inventoryMovements"></div></div>
+  <div id="inventoryAdminTools"></div>
+</section>
 <div class="footer-note">Latadía 4343 · Control de acceso · Base de datos central · Registro de auditoría</div></main>
 </div>
 <script>
@@ -379,7 +417,8 @@ const $=id=>document.getElementById(id);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fmt(s){return s?new Date(s).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'}):'—';}
 function fmtDate(d){return new Date(d).toLocaleDateString('es-CL',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});}
-function roleLabel(r){return r==='comite'?'COMITÉ':r==='administracion'?'ADMINISTRACIÓN':'CONSERJERÍA';}
+function roleLabel(r){return r==='comite'?'COMITÉ':r==='administracion'?'ADMINISTRACIÓN':r==='inventario'?'INVENTARIO':'CONSERJERÍA';}
+function isInventory(){return profile?.rol==='inventario';}
 function canCommittee(){return profile && ['comite','administracion'].includes(profile.rol)}
 
 async function init(){
@@ -404,9 +443,14 @@ async function enterApp(){
   $('loginScreen').style.display='none';
   $('app').style.display='none';
   $('portalScreen').style.display='flex';
-  $('portalUser').textContent=profile.nombre;
-  $('userBadge').textContent=`${esc(profile.nombre)} · ${roleLabel(profile.rol)}`;
+  $('portalUser').textContent=isInventory()?'Responsable de Inventario':profile.nombre;
+  $('userBadge').textContent=isInventory()?'INVENTARIO':`${esc(profile.nombre)} · ${roleLabel(profile.rol)}`;
   document.querySelectorAll('.committee-only').forEach(x=>x.style.display=canCommittee()?'block':'none');
+  document.querySelectorAll('.portal-module').forEach(x=>{
+    const keep=isInventory()?x.classList.contains('inventory-module'):(canCommittee()||!x.classList.contains('inventory-module'));
+    x.style.display=keep?'block':'none';
+  });
+  if(isInventory()){stopLiveUpdates();return;}
   await loadAll();
 }
 async function loadAll(){
@@ -497,8 +541,19 @@ async function revisar(id,val){
   await loadAll();
 }
 function enterModule(module){
+  if(isInventory() && module!=='inventario'){alert('Tu cuenta solo tiene acceso a Inventario de Insumos.');return;}
+  if(module==='inventario' && !(isInventory()||canCommittee())){alert('Este módulo está disponible para Inventario, Comité y Administración.');return;}
   $('portalScreen').style.display='none';
   $('app').style.display='block';
+  if(module==='inventario'){
+    $('nav').style.display='none';
+    document.querySelectorAll('main > .view').forEach(v=>v.classList.toggle('active',v.id==='inventario'));
+    $('inventoryAdminTools').innerHTML=canCommittee()?inventoryAdminFormHtml():'';
+    loadInventory();
+    return;
+  }
+  $('nav').style.display='flex';
+  document.querySelectorAll('main > .view').forEach(v=>{if(v.id==='inventario')v.classList.remove('active');});
   if(module==='ingreso'){
     show('registro');
     return;
@@ -517,8 +572,9 @@ function enterModule(module){
 function showPortal(){
   $('app').style.display='none';
   $('portalScreen').style.display='flex';
+  if(isInventory())document.querySelectorAll('.portal-module').forEach(x=>x.style.display=x.classList.contains('inventory-module')?'block':'none');
 }
-function show(id){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.v===id));render();}
+function show(id){if(isInventory()){if(id!=='inventario')return;return;}document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.v===id));render();}
 document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>show(b.dataset.v));
 function renderParkingSelector(inside){
   const ps=$('parking');
@@ -954,6 +1010,76 @@ function renderNovedades(){
         ? 'No hay novedades pendientes de gestión.'
         : 'No hay novedades resueltas o cerradas en el historial.'}</div>`;
 }
+
+let inventoryProducts=[], inventoryMovements=[], inventoryRequests=[];
+function goInventorySection(id){
+  const target=$(id);
+  if(!target)return;
+  target.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function inventoryAdminFormHtml(){return `<div class="card"><h3>Administrar catálogo</h3><div class="inventory-form-grid"><div><label>Nombre *</label><input id="invNewName" placeholder="Nombre del producto"></div><div><label>Categoría</label><select id="invNewCategory"><option value="aseo">Aseo</option><option value="seguridad">Seguridad</option><option value="oficina">Oficina</option><option value="uso_comun">Uso común</option><option value="otros">Otros</option></select></div><div><label>Unidad</label><input id="invNewUnit" value="unidad"></div><div><label>Stock mínimo</label><input id="invNewMin" type="number" min="0" step="0.01" value="0"></div><div><label>Ubicación</label><input id="invNewLocation" placeholder="Bodega, mueble..."></div></div><div class="actions"><button class="primary" onclick="createInventoryProduct()">Agregar producto</button></div></div>`;}
+async function loadInventory(){
+  if(!profile || !(isInventory()||canCommittee())) return;
+  const [p,m,r]=await Promise.all([
+    sb.from('inventario_productos').select('id,nombre,categoria,unidad,stock_actual,stock_minimo,ubicacion,activo,requiere_compra,observaciones').eq('activo',true).order('nombre'),
+    sb.from('inventario_movimientos').select('id,producto_id,tipo,cantidad,stock_anterior,stock_nuevo,motivo,observaciones,creado_por,creado_at').order('creado_at',{ascending:false}).limit(100),
+    sb.from('inventario_requerimientos').select('id,producto_id,nombre_producto,cantidad_solicitada,unidad,motivo,estado,creado_por,creado_at').order('creado_at',{ascending:false}).limit(100)
+  ]);
+  if(p.error||m.error||r.error){const e=p.error||m.error||r.error;alert('No se pudo cargar Inventario. Revisa las políticas de acceso en Supabase: '+e.message);return;}
+  inventoryProducts=p.data||[];inventoryMovements=m.data||[];inventoryRequests=r.data||[];
+  renderInventoryProducts();renderInventoryKpis();fillInventorySelects();renderInventoryMovements();renderInventoryRequests();
+}
+function renderInventoryKpis(){
+  const low=inventoryProducts.filter(p=>Number(p.stock_actual)<=Number(p.stock_minimo));
+  const pending=inventoryRequests.filter(r=>r.estado==='pendiente');
+  $('inventoryKpis').innerHTML=`<div class="inventory-kpi"><span class="muted">Productos activos</span><strong>${inventoryProducts.length}</strong></div><div class="inventory-kpi"><span class="muted">Bajo mínimo / por revisar</span><strong>${low.length}</strong></div><div class="inventory-kpi"><span class="muted">Requerimientos pendientes</span><strong>${pending.length}</strong></div>`;
+}
+function renderInventoryProducts(){
+  const q=($('inventorySearch')?.value||'').trim().toLowerCase();
+  const arr=inventoryProducts.filter(p=>(p.nombre+' '+p.categoria).toLowerCase().includes(q));
+  $('inventoryProducts').innerHTML=arr.length?`<table><thead><tr><th>Producto</th><th>Categoría</th><th>Stock</th><th>Mínimo</th><th>Unidad</th><th>Estado</th>${canCommittee()?'<th>Acción</th>':''}</tr></thead><tbody>${arr.map(p=>{const low=Number(p.stock_actual)<=Number(p.stock_minimo);return `<tr><td><b>${esc(p.nombre)}</b>${p.ubicacion?'<br><span class="muted">'+esc(p.ubicacion)+'</span>':''}</td><td>${esc(p.categoria)}</td><td>${Number(p.stock_actual)}</td><td>${Number(p.stock_minimo)}</td><td>${esc(p.unidad)}</td><td><span class="${low?'inventory-low':'inventory-ok'}">${low?'REVISAR / REPOSICIÓN':'OK'}</span></td>${canCommittee()?`<td><button class="secondary" onclick="editInventoryMinimum(${p.id})">Cambiar mínimo</button></td>`:''}</tr>`}).join('')}</tbody></table>`:'<div class="empty">No hay productos para mostrar.</div>';
+}
+function fillInventorySelects(){
+  const options=inventoryProducts.map(p=>new Option(`${p.nombre} · stock ${p.stock_actual} ${p.unidad}`,p.id));
+  const m=$('invMoveProduct');m.innerHTML='';options.forEach(o=>m.add(o.cloneNode(true)));
+  const r=$('invReqProduct');r.innerHTML='<option value="">Producto nuevo / no listado</option>';inventoryProducts.forEach(p=>r.add(new Option(p.nombre,p.id)));
+  m.onchange=()=>{const p=inventoryProducts.find(x=>String(x.id)===m.value);if(p&&Number(p.stock_actual)>0&&$('invMoveType').value==='inventario_inicial')$('invMoveType').value='entrada';};
+  r.onchange=()=>{const p=inventoryProducts.find(x=>String(x.id)===r.value);$('invReqName').value=p?.nombre||'';$('invReqUnit').value=p?.unidad||'unidad';};
+}
+async function saveInventoryMovement(){
+  const productId=Number($('invMoveProduct').value),type=$('invMoveType').value,qty=Number($('invMoveQty').value);
+  if(!productId||!Number.isFinite(qty)||qty<=0){alert('Selecciona un producto e ingresa una cantidad mayor que cero.');return;}
+  const product=inventoryProducts.find(p=>p.id===productId);
+  if(type==='inventario_inicial'&&Number(product?.stock_actual)!==0){alert('El inventario inicial solo corresponde a productos con stock cero. Usa Entrada / reposición para sumar stock.');return;}
+  const {data,error}=await sb.rpc('registrar_movimiento_inventario',{p_producto_id:productId,p_tipo:type,p_cantidad:qty,p_motivo:$('invMoveReason').value.trim()||null,p_observaciones:$('invMoveNotes').value.trim()||null});
+  if(error){alert('No se pudo registrar el movimiento: '+error.message);return;}
+  $('invMoveQty').value='';$('invMoveReason').value='';$('invMoveNotes').value='';await loadInventory();alert('Movimiento registrado. Stock actualizado correctamente.');
+}
+async function saveInventoryRequest(){
+  const productId=$('invReqProduct').value?Number($('invReqProduct').value):null;
+  const name=$('invReqName').value.trim(),unit=$('invReqUnit').value.trim()||'unidad',qty=$('invReqQty').value?Number($('invReqQty').value):null,reason=$('invReqReason').value.trim();
+  if(!name||!reason){alert('Indica el nombre del producto y el motivo del requerimiento.');return;}
+  if(qty!==null&&(!Number.isFinite(qty)||qty<=0)){alert('La cantidad solicitada debe ser mayor que cero.');return;}
+  const {error}=await sb.from('inventario_requerimientos').insert({producto_id:productId,nombre_producto:name,cantidad_solicitada:qty,unidad:unit,motivo:reason,creado_por:session.user.id});
+  if(error){alert('No se pudo guardar el requerimiento: '+error.message);return;}
+  $('invReqProduct').value='';$('invReqName').value='';$('invReqQty').value='';$('invReqUnit').value='unidad';$('invReqReason').value='';await loadInventory();alert('Requerimiento enviado al Comité.');
+}
+function renderInventoryRequests(){
+  $('inventoryRequests').innerHTML=inventoryRequests.length?`<h3 style="margin-top:22px">Requerimientos registrados</h3><div class="inventory-table-wrap"><table><tr><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Motivo</th><th>Estado</th>${canCommittee()?'<th>Acción</th>':''}</tr>${inventoryRequests.map(r=>`<tr><td>${fmt(r.creado_at)}</td><td><b>${esc(r.nombre_producto)}</b></td><td>${r.cantidad_solicitada===null?'—':Number(r.cantidad_solicitada)+' '+esc(r.unidad)}</td><td>${esc(r.motivo||'—')}</td><td>${esc(r.estado)}</td>${canCommittee()?`<td><select onchange="updateInventoryRequest(${r.id},this.value)"><option value="pendiente" ${r.estado==='pendiente'?'selected':''}>Pendiente</option><option value="revisado" ${r.estado==='revisado'?'selected':''}>Revisado</option><option value="resuelto" ${r.estado==='resuelto'?'selected':''}>Resuelto</option><option value="descartado" ${r.estado==='descartado'?'selected':''}>Descartado</option></select></td>`:''}</tr>`).join('')}</table></div>`:'<div class="empty">No hay requerimientos registrados.</div>';
+}
+async function updateInventoryRequest(id,estado){if(!canCommittee())return;const {error}=await sb.from('inventario_requerimientos').update({estado,actualizado_por:session.user.id,actualizado_at:new Date().toISOString()}).eq('id',id);if(error){alert('No se pudo actualizar el requerimiento: '+error.message);await loadInventory();return;}await loadInventory();}
+function renderInventoryMovements(){
+  $('inventoryMovements').innerHTML=inventoryMovements.length?`<div class="inventory-table-wrap"><table><tr><th>Fecha</th><th>Producto</th><th>Movimiento</th><th>Cantidad</th><th>Stock anterior</th><th>Stock nuevo</th><th>Motivo</th></tr>${inventoryMovements.map(m=>{const p=inventoryProducts.find(x=>x.id===m.producto_id);return `<tr><td>${fmt(m.creado_at)}</td><td>${esc(p?.nombre||('ID '+m.producto_id))}</td><td>${esc(m.tipo.replaceAll('_',' '))}</td><td>${Number(m.cantidad)}</td><td>${Number(m.stock_anterior)}</td><td>${Number(m.stock_nuevo)}</td><td>${esc(m.motivo||m.observaciones||'—')}</td></tr>`}).join('')}</table></div>`:'<div class="empty">Aún no hay movimientos registrados.</div>';
+}
+async function createInventoryProduct(){
+  if(!canCommittee())return;
+  const nombre=$('invNewName').value.trim(),categoria=$('invNewCategory').value,unidad=$('invNewUnit').value.trim()||'unidad',stock_minimo=Number($('invNewMin').value||0),ubicacion=$('invNewLocation').value.trim()||null;
+  if(!nombre){alert('Ingresa el nombre del producto.');return;}if(!Number.isFinite(stock_minimo)||stock_minimo<0){alert('El stock mínimo no puede ser negativo.');return;}
+  const {error}=await sb.from('inventario_productos').insert({nombre,categoria,unidad,stock_actual:0,stock_minimo,ubicacion,activo:true,creado_por:session.user.id});
+  if(error){alert('No se pudo crear el producto: '+error.message);return;}
+  $('invNewName').value='';$('invNewMin').value='0';$('invNewLocation').value='';await loadInventory();alert('Producto agregado al catálogo. Registra el stock físico en Inventario inicial.');
+}
+async function editInventoryMinimum(id){if(!canCommittee())return;const p=inventoryProducts.find(x=>x.id===id);if(!p)return;const raw=prompt(`Stock mínimo para ${p.nombre}:`,String(p.stock_minimo));if(raw===null)return;const value=Number(raw);if(!Number.isFinite(value)||value<0){alert('Ingresa un mínimo válido, igual o mayor que cero.');return;}const {error}=await sb.from('inventario_productos').update({stock_minimo:value,actualizado_por:session.user.id,actualizado_at:new Date().toISOString()}).eq('id',id);if(error){alert('No se pudo actualizar el mínimo: '+error.message);return;}await loadInventory();}
 
 function clock(){const d=new Date();$('date').textContent=fmtDate(d);$('time').textContent=d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 init();
